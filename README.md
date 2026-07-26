@@ -94,25 +94,19 @@ ai-appointment-reminder-system/
 ## 📸 Screenshots
 
 ### Workflow
-`screenshots/workflow.png`
 
-### Google Calendar
-`screenshots/calendar.png`
+![Workflow](screenshots/workflow.png)
+
 
 ### Airtable Database
-`screenshots/airtable.png`
+![Airtable](screenshots/airtable.png)
 
 ### Gemini AI Output
-`screenshots/gemini-output.png`
+![Gemini](screenshots/gemini.png)
 
 ### Vapi Integration
-`screenshots/vapi.png`
+![Vapi](screenshots/vapi.png)
 
-### Twilio Configuration
-`screenshots/twilio.png`
-
-### Workflow Execution
-`screenshots/execution.png`
 
 ---
 
