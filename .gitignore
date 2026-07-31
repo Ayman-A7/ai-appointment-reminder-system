@@ -1,31 +1,36 @@
 # Environment variables
 .env
+.env.local
 .env.*
 
-# Node.js dependencies (if used)
+# n8n configuration
+.n8n/
+
+# Node.js
 node_modules/
 
 # Logs
 *.log
-logs/
 
-# IDE settings
-.vscode/
-.idea/
-
-# Operating System files
+# OS files
 .DS_Store
 Thumbs.db
 
-# n8n local database
-database.sqlite
-*.sqlite
-*.sqlite-journal
+# IDE
+.vscode/
+.idea/
 
 # Temporary files
 tmp/
 temp/
 
-# Credentials
+# Exported credentials
 credentials.json
 service-account.json
+google-credentials.json
+client_secret.json
+
+# Private keys
+*.pem
+*.key
+*.p12

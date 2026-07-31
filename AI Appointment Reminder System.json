@@ -1,0 +1,1160 @@
+{
+  "name": "AI Voice Appointment Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "9cb8f556-d766-4cdc-a904-d4ea4320a3dd",
+      "name": "01 - Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "aymanamjad09541@gmail.com",
+          "mode": "list",
+          "cachedResultName": "aymanamjad09541@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.startOf('day').toISO() }}",
+        "timeMax": "={{ $now.endOf('day').toISO() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "6b12d1c3-3278-48fb-8eed-eecccc96de38",
+      "name": "02 - Get Today's Appointments",
+      "retryOnFail": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MbPchSTkTZ6IY5td",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f6ff4fc7-a1a1-448d-a87d-b97ba06bb47b",
+              "leftValue": "={{ $json.summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "5685ed6d-e59c-4a77-8600-30b441dc7c38",
+              "leftValue": "={{ $json.start.dateTime }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "10c9b074-64a5-4ece-b9fd-925f2cb2ec39",
+              "leftValue": "={{ $json.organizer.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "29ca6fb6-0579-43bf-a245-496622a31e3c",
+      "name": "03 - Valid Appointment?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5db7f5b4-5948-467b-8f41-b8f9b3cc59b1",
+              "name": "appointmentTitle",
+              "value": "={{ $json.summary.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "2cced0fd-78bf-4f60-87bf-420b153f9ec3",
+              "name": "organizerEmail",
+              "value": "={{ $json.organizer.email.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "2ee24cd6-cbdb-4dbc-9f67-b175c6de8325",
+              "name": "appointmentDate",
+              "value": "={{ $json.start.dateTime }}",
+              "type": "string"
+            },
+            {
+              "id": "6bbcccd8-f421-4db0-b3bf-43a8a73502d4",
+              "name": "appointmentEnd",
+              "value": "={{ $json.end.dateTime }}",
+              "type": "string"
+            },
+            {
+              "id": "3a7c9322-ee1e-4c7d-a6e9-038b4633673a",
+              "name": "calendarId",
+              "value": "={{ $json.organizer.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -16
+      ],
+      "id": "aca30333-e66e-4552-ae55-41cb97e3c33d",
+      "name": "04 - Clean Appointment Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\nconst year = now.getFullYear();\nconst month = String(now.getMonth() + 1).padStart(2, '0');\nconst day = String(now.getDate()).padStart(2, '0');\n\nconst random = Math.floor(Math.random() * 9000) + 1000;\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    appointmentId: `APT-${year}${month}${day}-${random}`\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "fff96062-8843-4736-ab72-bf8c057fed6d",
+      "name": "05 - Generate Appointment ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI assistant generating professional appointment reminder phone scripts.\n\nCustomer Name:\n{{ $json.appointmentTitle }}\n\nAppointment Time:\n{{ $json.appointmentDate }}\n\nGenerate a friendly reminder that:\n\n• Greets the customer\n• Mentions the appointment time\n• Politely asks them to confirm attendance\n• Keeps the script under 80 words\n• Sounds natural for a voice AI\n• Do not use markdown or bullet points",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1120,
+        -16
+      ],
+      "id": "bc6c4850-1367-4123-8a61-7af8b4357f48",
+      "name": "06 - Generate Reminder Script",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apphRr8XVnu3dA0vK",
+          "mode": "list",
+          "cachedResultName": "AI Voice Agent",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcj6m4TL77jD9s7",
+          "mode": "list",
+          "cachedResultName": "Call Logs",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK/tblcj6m4TL77jD9s7"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Pending",
+            "AI Script": "={{ $json.text }}",
+            "Appointment ID": "={{ $('05 - Generate Appointment ID').item.json.appointmentId }}",
+            "Organizer Email": "={{ $('05 - Generate Appointment ID').item.json.organizerEmail }}",
+            "Appointment Date": "={{ $('05 - Generate Appointment ID').item.json.appointmentDate }}",
+            "Reminder Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Organizer Email",
+              "displayName": "Organizer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Appointment Date",
+              "displayName": "Appointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Script",
+              "displayName": "AI Script",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reminder Status",
+              "displayName": "Reminder Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        -16
+      ],
+      "id": "731570d5-dc2d-4dae-91ad-4e620670f923",
+      "name": "07 - Save Appointment",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "HTKgdkMecNpgMRig",
+          "name": "Airtable account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        208
+      ],
+      "id": "a246b58f-c03f-4052-9934-e03fe7291d6b",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WrbY98auAVWVuuZ6",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assistantId": "53ac54a0-54a9-4219-96dc-4a6e1b635dea",
+        "phoneNumberId": "d045a5f2-5041-4f13-8384-38a9516dde30",
+        "customerNumber": "+923245303609",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-vapiai.vapi",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        -16
+      ],
+      "id": "0d813f25-d105-4932-9950-87d5ed5a463f",
+      "name": "08 - Send AI Reminder Call",
+      "credentials": {
+        "vapiApi": {
+          "id": "CjTgpM4EadHpK15Q",
+          "name": "Vapi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4d0a16b1-febe-4781-a314-397e0f223d9a",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "queued",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        -16
+      ],
+      "id": "6dbbbf6e-f2fa-4bed-81d4-2a8ddb64c982",
+      "name": "09 - Call Successful?"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apphRr8XVnu3dA0vK",
+          "mode": "list",
+          "cachedResultName": "AI Voice Agent",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcj6m4TL77jD9s7",
+          "mode": "list",
+          "cachedResultName": "Call Logs",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK/tblcj6m4TL77jD9s7"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('07 - Save Appointment').item.json.id }}",
+            "Appointment ID": "={{ $('07 - Save Appointment').item.json.fields['Appointment ID'] }}",
+            "Status": "Called",
+            "Reminder Status": "Called",
+            "Organizer Email": "={{ $('07 - Save Appointment').item.json.fields['Organizer Email'] }}",
+            "Appointment Date": "={{ $('07 - Save Appointment').item.json.fields['Appointment Date'] }}",
+            "AI Script": "={{ $('07 - Save Appointment').item.json.fields['AI Script'] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reminder Status",
+              "displayName": "Reminder Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Organizer Email",
+              "displayName": "Organizer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Appointment Date",
+              "displayName": "Appointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Script",
+              "displayName": "AI Script",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        -112
+      ],
+      "id": "4e6907f6-0d82-4e90-91c6-594a1067522e",
+      "name": "10 - Update Status (Success)",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "HTKgdkMecNpgMRig",
+          "name": "Airtable account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apphRr8XVnu3dA0vK",
+          "mode": "list",
+          "cachedResultName": "AI Voice Agent",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnHzgFT3IBCUnKv",
+          "mode": "list",
+          "cachedResultName": "Workflow Executions",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK/tblnHzgFT3IBCUnKv"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{$execution.id}}",
+            "Workflow": "Appointment Reminder",
+            "Appointment ID": "={{ $json.fields['Appointment ID'] }}",
+            "Status": "Success",
+            "Message": "Reminder call submitted to Vapi successfully"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        -112
+      ],
+      "id": "ed35eb14-02e8-46a0-8655-6feb24cba33a",
+      "name": "11 - Log Success",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "HTKgdkMecNpgMRig",
+          "name": "Airtable account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apphRr8XVnu3dA0vK",
+          "mode": "list",
+          "cachedResultName": "AI Voice Agent",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcj6m4TL77jD9s7",
+          "mode": "list",
+          "cachedResultName": "Call Logs",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK/tblcj6m4TL77jD9s7"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('07 - Save Appointment').item.json.id }}",
+            "Appointment ID": "={{ $('07 - Save Appointment').item.json.fields['Appointment ID'] }}",
+            "Status": "Failed",
+            "Reminder Status": "Failed",
+            "Organizer Email": "={{ $('07 - Save Appointment').item.json.fields['Organizer Email'] }}",
+            "AI Script": "={{ $('07 - Save Appointment').item.json.fields['AI Script'] }}",
+            "Appointment Date": "={{ $('07 - Save Appointment').item.json.fields['Appointment Date'] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reminder Status",
+              "displayName": "Reminder Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Called",
+                  "value": "Called"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Organizer Email",
+              "displayName": "Organizer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Appointment Date",
+              "displayName": "Appointment Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Script",
+              "displayName": "AI Script",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        80
+      ],
+      "id": "e1141997-7afc-42c8-afe6-079151e67415",
+      "name": "10 - Update Status (Failed)",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "HTKgdkMecNpgMRig",
+          "name": "Airtable account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apphRr8XVnu3dA0vK",
+          "mode": "list",
+          "cachedResultName": "AI Voice Agent",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnHzgFT3IBCUnKv",
+          "mode": "list",
+          "cachedResultName": "Workflow Executions",
+          "cachedResultUrl": "https://airtable.com/apphRr8XVnu3dA0vK/tblnHzgFT3IBCUnKv"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{$execution.id}}",
+            "Workflow": "Appointment Reminder",
+            "Appointment ID": "={{ $json.fields['Appointment ID'] }}",
+            "Status": "Failed",
+            "Message": "Failed to submit reminder call to Vapi"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Appointment ID",
+              "displayName": "Appointment ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        80
+      ],
+      "id": "e4556489-de53-4b62-80b4-1f681100523f",
+      "name": "11 - Log Failure",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "HTKgdkMecNpgMRig",
+          "name": "Airtable account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "01 - Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "02 - Get Today's Appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02 - Get Today's Appointments": {
+      "main": [
+        [
+          {
+            "node": "03 - Valid Appointment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03 - Valid Appointment?": {
+      "main": [
+        [
+          {
+            "node": "04 - Clean Appointment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 - Clean Appointment Data": {
+      "main": [
+        [
+          {
+            "node": "05 - Generate Appointment ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05 - Generate Appointment ID": {
+      "main": [
+        [
+          {
+            "node": "06 - Generate Reminder Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06 - Generate Reminder Script": {
+      "main": [
+        [
+          {
+            "node": "07 - Save Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "07 - Save Appointment": {
+      "main": [
+        [
+          {
+            "node": "08 - Send AI Reminder Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "06 - Generate Reminder Script",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "08 - Send AI Reminder Call": {
+      "main": [
+        [
+          {
+            "node": "09 - Call Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "09 - Call Successful?": {
+      "main": [
+        [
+          {
+            "node": "10 - Update Status (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "10 - Update Status (Failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10 - Update Status (Success)": {
+      "main": [
+        [
+          {
+            "node": "11 - Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10 - Update Status (Failed)": {
+      "main": [
+        [
+          {
+            "node": "11 - Log Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fbb8d88e-f88a-489d-9fbe-70ad7b18bbec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4749ef1dff9dab97533d296fc60571d1f46847c4cabe69d94e1cae900f679a95"
+  },
+  "nodeGroups": [],
+  "id": "uz3lyN2bC0NCHp71",
+  "tags": []
+}
