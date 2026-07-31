@@ -1,19 +1,62 @@
-# AI Appointment Reminder System with Voice AI
+# 🤖 AI Voice Appointment Reminder System
 
-An AI-powered appointment reminder workflow built with **n8n**, **Google Calendar**, **Google Gemini**, **Airtable**, **Twilio**, and **Vapi**. This automation retrieves upcoming appointments, generates personalized reminder scripts using AI, logs all reminders in Airtable, and is designed to deliver reminders via SMS or AI voice calls.
+An AI-powered appointment reminder workflow built with **n8n**, **Google Gemini**, **Google Calendar**, **Airtable**, and **Vapi**. The system automatically retrieves upcoming appointments, generates personalized reminder scripts using AI, stores appointment records, initiates AI voice calls, and tracks workflow execution for monitoring.
 
 ---
 
 ## 🚀 Features
 
-- 📅 Automatically checks upcoming appointments from Google Calendar
-- 🤖 Generates personalized reminder scripts using Google Gemini
-- 📋 Stores reminder details in Airtable
-- 📞 Voice AI integration with Vapi
-- 📱 SMS integration with Twilio
-- 🔄 Processes multiple appointments automatically
-- 📊 Updates reminder status in Airtable
-- ⚡ Fully automated with a scheduled trigger
+- 📅 Automatically retrieves upcoming appointments from Google Calendar
+- ✅ Validates and cleans appointment data
+- 🆔 Generates a unique Appointment ID
+- 🤖 Uses Google Gemini to generate personalized reminder scripts
+- 📞 Initiates AI voice reminder calls using Vapi
+- 🗂️ Stores appointment details in Airtable
+- 📊 Tracks reminder status and call status
+- 📝 Logs successful and failed workflow executions
+- ⚡ Fully automated with scheduled execution
+
+---
+
+## 🏗️ Workflow Architecture
+
+```text
+Schedule Trigger
+        │
+        ▼
+Get Today's Appointments
+        │
+        ▼
+Validate Appointment Data
+        │
+        ▼
+Clean Appointment Data
+        │
+        ▼
+Generate Appointment ID
+        │
+        ▼
+Generate AI Reminder Script (Gemini)
+        │
+        ▼
+Save Appointment (Airtable)
+        │
+        ▼
+Send AI Reminder Call (Vapi)
+        │
+        ▼
+Call Submitted?
+     ┌─────────────┐
+     │             │
+     ▼             ▼
+Success         Failed
+     │             │
+Update        Update
+Status        Status
+     │             │
+Log           Log
+Success       Failure
+```
 
 ---
 
@@ -23,71 +66,40 @@ An AI-powered appointment reminder workflow built with **n8n**, **Google Calenda
 - Google Calendar API
 - Google Gemini
 - Airtable
-- Twilio
 - Vapi AI
+- HTTP Request
+- AI Automation
 - REST APIs
 
 ---
 
-## 📌 Workflow
+## 📂 Airtable Structure
 
-```text
-Schedule Trigger
-        │
-        ▼
-Google Calendar
-        │
-        ▼
-Loop Over Items
-        │
-        ▼
-Google Gemini AI
-(Generate Reminder Script)
-        │
-        ▼
-Airtable
-(Create Reminder Log)
-        │
-        ▼
-Vapi HTTP Request
-(Initiate AI Voice Call)
-        │
-        ▼
-Airtable
-(Update Call Status)
-```
+### Appointments Table
 
----
+| Field |
+|--------|
+| Appointment ID |
+| Appointment Title |
+| Organizer Email |
+| Appointment Date |
+| Reminder Script |
+| Status |
+| Reminder Status |
+| Call Status |
+| Created At |
+| Updated At |
 
-## 📂 Repository Structure
+### Workflow Executions Table
 
-```
-ai-appointment-reminder-system/
-│
-├── workflow.json
-├── README.md
-├── .gitignore
-└── screenshots/
-    ├── workflow.png
-    ├── calendar.png
-    ├── airtable.png
-    ├── gemini-output.png
-    ├── vapi.png
-    ├── twilio.png
-    └── execution.png
-```
-
----
-
-## ⚙️ How It Works
-
-1. The workflow runs automatically on a schedule.
-2. Google Calendar retrieves upcoming appointments.
-3. Each appointment is processed individually.
-4. Google Gemini generates a personalized reminder.
-5. Reminder details are stored in Airtable.
-6. A request is sent to Vapi to initiate an AI voice call.
-7. Airtable is updated with the call status.
+| Field |
+|--------|
+| Execution ID |
+| Workflow |
+| Appointment ID |
+| Status |
+| Message |
+| Timestamp |
 
 ---
 
@@ -97,81 +109,86 @@ ai-appointment-reminder-system/
 
 ![Workflow](screenshots/workflow.png)
 
+```
+screenshots/workflow.png
+```
 
-### Airtable Database
+### AI Response
+
+![Workflow](screenshots/ai.png)
+
+```
+screenshots/ai.png
+```
+
+### Airtable
+
 ![Airtable](screenshots/airtable.png)
 
-### Gemini AI Output
-![Gemini](screenshots/gemini.png)
+![Airtable](screenshots/executions.png)
 
-### Vapi Integration
-![Vapi](screenshots/vapi.png)
 
+```
+screenshots/airtable.png
+
+screenshots/executions.png
+```
 
 ---
 
-## 💡 Business Use Cases
+## 🎥 Demo
 
-- Dental Clinics
-- Medical Practices
-- Salons & Spas
+A short demonstration showing:
+
+- Scheduled workflow execution
+- Google Calendar appointment retrieval
+- AI reminder generation with Gemini
+- Airtable record creation
+- Vapi voice call request
+- Status updates
+- Workflow logging
+
+---
+
+## 💼 Business Use Cases
+
+- Healthcare Clinics
+- Dental Practices
+- Consultants
 - Coaching Businesses
+- Salons & Spas
 - Law Firms
+- Financial Advisors
 - Real Estate Agencies
-- Consulting Firms
 
 ---
 
-## 🔧 Requirements
+## 🔮 Future Improvements
 
-- n8n
-- Google Calendar Account
-- Google Gemini API Key
-- Airtable Account
-- Vapi Account
-- Twilio Account (optional for telephony integration)
-
----
-
-## 📈 Skills Demonstrated
-
-- AI Workflow Automation
-- Prompt Engineering
-- Google Calendar Integration
-- Airtable Database Automation
-- REST API Integration
-- HTTP Request Configuration
-- Voice AI Integration
-- Multi-step Workflow Design
-- AI-generated Customer Communication
-- Scheduling & Automation
-
----
-
-## 🚀 Future Improvements
-
-- Two-way AI conversations
-- Automatic appointment rescheduling
+- SMS reminders
+- Email reminders
 - WhatsApp reminders
-- Email fallback notifications
-- Voice analytics dashboard
-- Retry logic for failed calls
-- CRM integrations (HubSpot, Salesforce)
-- Multi-language voice support
+- Two-way appointment confirmation
+- Automatic appointment cancellation handling
+- Multi-language voice reminders
+- Retry failed reminder calls
+- Slack notifications for failed reminders
 
 ---
 
-## 📚 What I Learned
+## 📁 Project Structure
 
-This project helped strengthen my skills in:
-
-- Building end-to-end AI automation workflows
-- Integrating multiple third-party APIs
-- Working with HTTP Request nodes in n8n
-- Voice AI orchestration using Vapi
-- Managing structured data with Airtable
-- Scheduling automated workflows
-- Creating production-style business automations
+```
+ai-voice-appointment-reminder/
+│
+├── README.md
+├── workflow.json
+├── images/
+│   ├── workflow.png
+│   ├── appointments-table.png
+│   └── workflow-executions.png
+└── LICENSE
+```
 
 ---
 
@@ -179,8 +196,16 @@ This project helped strengthen my skills in:
 
 **Ayman Amjad**
 
-GitHub: https://github.com/Ayman-A7
+Software Engineer | AI Automation Developer
+
+Specializing in:
+
+- AI Automation
+- n8n Workflows
+- AI Agents
+- Voice AI
+- Business Process Automation
 
 ---
 
-⭐ If you found this project interesting, feel free to star the repository!
+## ⭐ If you found this project helpful, consider giving it a Star!
